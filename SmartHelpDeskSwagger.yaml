@@ -1,0 +1,2451 @@
+"openapi": "3.0.3"
+"info":
+  "title": "Smart Helpdesk CRM — Swagger đầy đủ"
+  "version": "1.0.0"
+  "description": "Đối chiếu source ngày 2026-09-12. 25 handler nghiệp vụ / 29 method-path (4 alias auth). JSON UTF-8; UUID dạng chuỗi; Instant ISO-8601 UTC. ResponseGeneral bỏ field null ở cấp envelope. HTTP 201 vẫn có body.status=200. Lỗi Spring Security filter không bảo đảm envelope ApiError. AI chạy RuleBasedLlmAdapter nội bộ, không gọi API LLM bên ngoài."
+"servers":
+  - 
+    "url": "http://localhost:8080"
+    "description": "Local; đổi host/port theo môi trường"
+"tags":
+  - 
+    "name": "Auth"
+  - 
+    "name": "Members"
+  - 
+    "name": "Companies"
+  - 
+    "name": "Requests"
+  - 
+    "name": "AI"
+  - 
+    "name": "Alerts"
+  - 
+    "name": "Chat"
+"security":
+  - 
+    "bearerAuth": []
+"paths":
+  "/api/auth/login":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Đăng nhập"
+      "operationId": "login"
+      "description": "Quyền: Public. Trả accessToken và refreshToken. Access mặc định 86400000 ms, refresh gấp 7 lần; phụ thuộc cấu hình."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/loginResponse"
+              "example":
+                "status": 200
+                "message": "Login successful"
+                "data":
+                  "accessToken": "<accessToken>"
+                  "refreshToken": "<refreshToken>"
+                  "user":
+                    "id": "0198f101-1234-7000-8000-000000000001"
+                    "email": "client@example.com"
+                    "name": "Nguyễn Văn An"
+                    "role": "ADMIN"
+                    "phone": "Ví dụ"
+                    "companyId": "COMPANY001"
+                    "companyName": "Công ty mẫu"
+                    "status": "active"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "401":
+          "$ref": "#/components/responses/Error401"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/LoginRequest"
+            "example":
+              "email": "client@example.com"
+              "password": "Example123!"
+  "/api/auth/register":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Đăng ký tài khoản"
+      "operationId": "register"
+      "description": "Quyền: Public. Email đã tồn tại trả BAD_400. companyId không tồn tại trả RES_404."
+      "x-access": "Public"
+      "responses":
+        "201":
+          "description": "Tạo thành công; body.status=200."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/registerResponse"
+              "example":
+                "status": 200
+                "message": "Member registered successfully"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "email": "client@example.com"
+                  "name": "Nguyễn Văn An"
+                  "role": "ADMIN"
+                  "phone": "Ví dụ"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "status": "active"
+                  "isDeleted": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/RegisterRequest"
+            "example":
+              "email": "client@example.com"
+              "password": "Example123!"
+              "name": "Nguyễn Văn An"
+              "role": "CLIENT"
+              "phone": "0900000000"
+              "companyId": "COMPANY001"
+  "/api/auth/refresh":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Làm mới token"
+      "operationId": "refresh"
+      "description": "Quyền: Public. Refresh token chỉ dùng một lần; xoay vòng cả hai token. Store trong bộ nhớ nên mất khi restart."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/refreshResponse"
+              "example":
+                "status": 200
+                "message": "Token refreshed successfully"
+                "data":
+                  "accessToken": "<accessToken>"
+                  "refreshToken": "<refreshToken>"
+                  "accessTokenTtl": 86400000
+                  "refreshTokenTtl": 604800000
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "401":
+          "$ref": "#/components/responses/Error401"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/TokenRefreshRequest"
+            "example":
+              "refreshToken": "<refreshToken>"
+      "parameters":
+        - 
+          "name": "User-Agent"
+          "in": "header"
+          "required": false
+          "schema":
+            "type": "string"
+          "description": "Thiếu/rỗng dùng UNKNOWN_DEVICE. Trình duyệt tự quản lý header này."
+  "/api/auth/logout":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Đăng xuất"
+      "operationId": "logout"
+      "description": "Quyền: Public. Không body. Có bearer hợp lệ: thu hồi toàn bộ refresh token của user; không thu hồi access token. Không gửi bearer vẫn trả thành công. Response không có data."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/logoutResponse"
+              "example":
+                "status": 200
+                "message": "Logout successful"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security":
+        - {}
+        - 
+          "bearerAuth": []
+  "/api/v1/auth/login":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Đăng nhập"
+      "operationId": "loginV1"
+      "description": "Quyền: Public. Trả accessToken và refreshToken. Access mặc định 86400000 ms, refresh gấp 7 lần; phụ thuộc cấu hình."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/loginV1Response"
+              "example":
+                "status": 200
+                "message": "Login successful"
+                "data":
+                  "accessToken": "<accessToken>"
+                  "refreshToken": "<refreshToken>"
+                  "user":
+                    "id": "0198f101-1234-7000-8000-000000000001"
+                    "email": "client@example.com"
+                    "name": "Nguyễn Văn An"
+                    "role": "ADMIN"
+                    "phone": "Ví dụ"
+                    "companyId": "COMPANY001"
+                    "companyName": "Công ty mẫu"
+                    "status": "active"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "401":
+          "$ref": "#/components/responses/Error401"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/LoginRequest"
+            "example":
+              "email": "client@example.com"
+              "password": "Example123!"
+  "/api/v1/auth/register":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Đăng ký tài khoản"
+      "operationId": "registerV1"
+      "description": "Quyền: Public. Email đã tồn tại trả BAD_400. companyId không tồn tại trả RES_404."
+      "x-access": "Public"
+      "responses":
+        "201":
+          "description": "Tạo thành công; body.status=200."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/registerV1Response"
+              "example":
+                "status": 200
+                "message": "Member registered successfully"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "email": "client@example.com"
+                  "name": "Nguyễn Văn An"
+                  "role": "ADMIN"
+                  "phone": "Ví dụ"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "status": "active"
+                  "isDeleted": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/RegisterRequest"
+            "example":
+              "email": "client@example.com"
+              "password": "Example123!"
+              "name": "Nguyễn Văn An"
+              "role": "CLIENT"
+              "phone": "0900000000"
+              "companyId": "COMPANY001"
+  "/api/v1/auth/refresh":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Làm mới token"
+      "operationId": "refreshV1"
+      "description": "Quyền: Public. Refresh token chỉ dùng một lần; xoay vòng cả hai token. Store trong bộ nhớ nên mất khi restart."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/refreshV1Response"
+              "example":
+                "status": 200
+                "message": "Token refreshed successfully"
+                "data":
+                  "accessToken": "<accessToken>"
+                  "refreshToken": "<refreshToken>"
+                  "accessTokenTtl": 86400000
+                  "refreshTokenTtl": 604800000
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "401":
+          "$ref": "#/components/responses/Error401"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/TokenRefreshRequest"
+            "example":
+              "refreshToken": "<refreshToken>"
+      "parameters":
+        - 
+          "name": "User-Agent"
+          "in": "header"
+          "required": false
+          "schema":
+            "type": "string"
+          "description": "Thiếu/rỗng dùng UNKNOWN_DEVICE. Trình duyệt tự quản lý header này."
+  "/api/v1/auth/logout":
+    "post":
+      "tags":
+        - "Auth"
+      "summary": "Đăng xuất"
+      "operationId": "logoutV1"
+      "description": "Quyền: Public. Không body. Có bearer hợp lệ: thu hồi toàn bộ refresh token của user; không thu hồi access token. Không gửi bearer vẫn trả thành công. Response không có data."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/logoutV1Response"
+              "example":
+                "status": 200
+                "message": "Logout successful"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security":
+        - {}
+        - 
+          "bearerAuth": []
+  "/api/members":
+    "post":
+      "tags":
+        - "Members"
+      "summary": "Đăng ký member"
+      "operationId": "registerMember"
+      "description": "Quyền: Public. Cùng nghiệp vụ với /api/auth/register."
+      "x-access": "Public"
+      "responses":
+        "201":
+          "description": "Tạo thành công; body.status=200."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/registerMemberResponse"
+              "example":
+                "status": 200
+                "message": "Member registered successfully"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "email": "client@example.com"
+                  "name": "Nguyễn Văn An"
+                  "role": "ADMIN"
+                  "phone": "Ví dụ"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "status": "active"
+                  "isDeleted": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/RegisterRequest"
+            "example":
+              "email": "client@example.com"
+              "password": "Example123!"
+              "name": "Nguyễn Văn An"
+              "role": "CLIENT"
+              "phone": "0900000000"
+              "companyId": "COMPANY001"
+    "get":
+      "tags":
+        - "Members"
+      "summary": "Danh sách member"
+      "operationId": "listMembers"
+      "description": "Quyền: ADMIN. Không phân trang; findAll gồm cả member có isDeleted=true."
+      "x-access": "ADMIN"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/listMembersResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data": []
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+  "/api/members/{id}":
+    "get":
+      "tags":
+        - "Members"
+      "summary": "Chi tiết member"
+      "operationId": "getMember"
+      "description": "Quyền: Đã đăng nhập. Không kiểm tra chủ sở hữu hoặc cùng công ty."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/getMemberResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "email": "client@example.com"
+                  "name": "Nguyễn Văn An"
+                  "role": "ADMIN"
+                  "phone": "Ví dụ"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "status": "active"
+                  "isDeleted": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+  "/api/companies":
+    "get":
+      "tags":
+        - "Companies"
+      "summary": "Danh sách công ty"
+      "operationId": "listCompanies"
+      "description": "Quyền: Public. Sắp xếp companyName rồi ID tăng dần; không phân trang."
+      "x-access": "Public"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/listCompaniesResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data": []
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "security": []
+  "/api/companies/{companyId}":
+    "get":
+      "tags":
+        - "Companies"
+      "summary": "Chi tiết công ty"
+      "operationId": "getCompany"
+      "description": "Quyền: Đã đăng nhập."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/getCompanyResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "address": "Ví dụ"
+                  "phone": "Ví dụ"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "companyId"
+          "in": "path"
+          "required": true
+          "description": "Mã công ty, không phải UUID."
+          "schema":
+            "type": "string"
+            "example": "COMPANY001"
+  "/api/requests":
+    "post":
+      "tags":
+        - "Requests"
+      "summary": "Tạo yêu cầu hỗ trợ"
+      "operationId": "createRequest"
+      "description": "Quyền: CLIENT. Client phải có companyId. Tạo PENDING, chưa gán developer, ghi CREATE history và gửi alert cho admin (HIGH_PRIORITY_REGISTERED nếu HIGH, còn lại REQUEST_REGISTERED)."
+      "x-access": "CLIENT"
+      "responses":
+        "201":
+          "description": "Tạo thành công; body.status=200."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/createRequestResponse"
+              "example":
+                "status": 200
+                "message": "Request created successfully"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "title": "Không đăng nhập được"
+                  "description": "Ví dụ"
+                  "category": "BUG"
+                  "priority": "HIGH"
+                  "status": "PENDING"
+                  "clientId": "0198f101-1234-7000-8000-000000000001"
+                  "clientName": "Ví dụ"
+                  "assignedDeveloperId": "0198f101-1234-7000-8000-000000000001"
+                  "assignedDeveloperName": "Ví dụ"
+                  "createdAt": "2026-09-12T03:00:00Z"
+                  "updatedAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/CreateRequestDto"
+            "example":
+              "title": "Không đăng nhập được"
+              "description": "Ứng dụng báo error khi đăng nhập."
+              "category": "BUG"
+              "priority": "MEDIUM"
+    "get":
+      "tags":
+        - "Requests"
+      "summary": "Danh sách yêu cầu"
+      "operationId": "listRequests"
+      "description": "Quyền: Đã đăng nhập. ADMIN xem tất cả; CLIENT chỉ request mình tạo; DEVELOPER chỉ request được giao. Bộ lọc kết hợp AND. search tìm title/description không phân biệt hoa thường, trim khoảng trắng; % và _ giữ wildcard SQL LIKE. page âm, size <= 0, sortBy không hợp lệ hoặc lỗi chuyển kiểu query/path có thể vào SYS_500."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/listRequestsResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "content": []
+                  "pageable":
+                    "pageNumber": 0
+                    "pageSize": 0
+                    "sort":
+                      "empty": false
+                      "sorted": false
+                      "unsorted": false
+                    "offset": 0
+                    "paged": false
+                    "unpaged": false
+                  "totalPages": 0
+                  "totalElements": 0
+                  "last": false
+                  "size": 0
+                  "number": 0
+                  "sort":
+                    "empty": false
+                    "sorted": false
+                    "unsorted": false
+                  "numberOfElements": 0
+                  "first": false
+                  "empty": false
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "category"
+          "in": "query"
+          "required": false
+          "schema":
+            "$ref": "#/components/schemas/RequestCategory"
+          "description": "Lọc loại yêu cầu"
+        - 
+          "name": "priority"
+          "in": "query"
+          "required": false
+          "schema":
+            "$ref": "#/components/schemas/RequestPriority"
+          "description": "Lọc ưu tiên"
+        - 
+          "name": "status"
+          "in": "query"
+          "required": false
+          "schema":
+            "$ref": "#/components/schemas/RequestStatus"
+          "description": "Lọc trạng thái"
+        - 
+          "name": "search"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "string"
+          "description": "Tìm title hoặc description"
+        - 
+          "name": "page"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "integer"
+            "default": 0
+            "minimum": 0
+          "description": "Trang bắt đầu từ 0"
+        - 
+          "name": "size"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "integer"
+            "default": 10
+            "minimum": 1
+          "description": "Số bản ghi/trang; chưa giới hạn tối đa"
+        - 
+          "name": "sortBy"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "string"
+            "default": "createdAt"
+          "description": "Thuộc tính entity Request: createdAt, updatedAt, title, priority, status..."
+        - 
+          "name": "sortDir"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "string"
+            "default": "desc"
+          "description": "asc không phân biệt hoa thường là tăng; mọi giá trị khác dùng giảm"
+  "/api/requests/stats":
+    "get":
+      "tags":
+        - "Requests"
+      "summary": "Thống kê yêu cầu"
+      "operationId": "requestStats"
+      "description": "Quyền: ADMIN. Tổng số, số DONE, tỷ lệ hoàn thành, số theo category và developer chưa xóa."
+      "x-access": "ADMIN"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/requestStatsResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "totalRequests": 0
+                  "completedRequests": 0
+                  "completionRate": 0
+                  "requestsByCategory": {}
+                  "requestsByDeveloper": []
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+  "/api/requests/{id}":
+    "get":
+      "tags":
+        - "Requests"
+      "summary": "Chi tiết yêu cầu"
+      "operationId": "requestDetail"
+      "description": "Quyền: ADMIN hoặc client tạo request hoặc developer được giao. Gồm công ty, client, developer và history tăng dần theo changedAt. Sai quyền tài nguyên trả BAD_400."
+      "x-access": "ADMIN hoặc client tạo request hoặc developer được giao"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/requestDetailResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "companyAddress": "Ví dụ"
+                  "companyPhone": "Ví dụ"
+                  "title": "Không đăng nhập được"
+                  "description": "Ví dụ"
+                  "category": "BUG"
+                  "priority": "HIGH"
+                  "status": "PENDING"
+                  "clientId": "0198f101-1234-7000-8000-000000000001"
+                  "clientName": "Ví dụ"
+                  "clientEmail": "Ví dụ"
+                  "assignedDeveloperId": "0198f101-1234-7000-8000-000000000001"
+                  "assignedDeveloperName": "Ví dụ"
+                  "assignedDeveloperEmail": "Ví dụ"
+                  "createdAt": "2026-09-12T03:00:00Z"
+                  "updatedAt": "2026-09-12T03:00:00Z"
+                  "history": []
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+  "/api/requests/{id}/assign":
+    "patch":
+      "tags":
+        - "Requests"
+      "summary": "Phân công developer"
+      "operationId": "assignDeveloper"
+      "description": "Quyền: ADMIN. Không body, {} hoặc developerId=null: chọn developer active, chưa xóa, ít task PENDING/IN_PROGRESS nhất; hòa thì chọn người hoàn thành gần nhất, tiếp tục hòa chọn ID nhỏ nhất theo chuỗi. Gán thủ công chỉ kiểm tra tồn tại và role DEVELOPER. Không đổi status; ghi ASSIGN và gửi ASSIGNED alert."
+      "x-access": "ADMIN"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/assignDeveloperResponse"
+              "example":
+                "status": 200
+                "message": "Developer assigned successfully"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "title": "Không đăng nhập được"
+                  "description": "Ví dụ"
+                  "category": "BUG"
+                  "priority": "HIGH"
+                  "status": "PENDING"
+                  "clientId": "0198f101-1234-7000-8000-000000000001"
+                  "clientName": "Ví dụ"
+                  "assignedDeveloperId": "0198f101-1234-7000-8000-000000000001"
+                  "assignedDeveloperName": "Ví dụ"
+                  "createdAt": "2026-09-12T03:00:00Z"
+                  "updatedAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+      "requestBody":
+        "required": false
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/AssignDeveloperDto"
+            "examples":
+              "manual":
+                "value":
+                  "developerId": "0198f101-1234-7000-8000-000000000001"
+              "automatic":
+                "value": {}
+  "/api/requests/{id}/status":
+    "patch":
+      "tags":
+        - "Requests"
+      "summary": "Cập nhật trạng thái"
+      "operationId": "updateStatus"
+      "description": "Quyền: ADMIN hoặc developer được giao. Chỉ PENDING → IN_PROGRESS → DONE. Không cho cùng trạng thái, đi lùi, bỏ bước hoặc mở lại DONE. Ghi UPDATE/CLOSE; gửi STATUS_CHANGED cho client. Sai quyền trả BAD_400."
+      "x-access": "ADMIN hoặc developer được giao"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/updateStatusResponse"
+              "example":
+                "status": 200
+                "message": "Request status updated successfully"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "companyId": "COMPANY001"
+                  "companyName": "Công ty mẫu"
+                  "title": "Không đăng nhập được"
+                  "description": "Ví dụ"
+                  "category": "BUG"
+                  "priority": "HIGH"
+                  "status": "PENDING"
+                  "clientId": "0198f101-1234-7000-8000-000000000001"
+                  "clientName": "Ví dụ"
+                  "assignedDeveloperId": "0198f101-1234-7000-8000-000000000001"
+                  "assignedDeveloperName": "Ví dụ"
+                  "createdAt": "2026-09-12T03:00:00Z"
+                  "updatedAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/UpdateRequestStatusDto"
+            "example":
+              "status": "IN_PROGRESS"
+              "memo": "Bắt đầu xử lý"
+  "/api/requests/{id}/history":
+    "get":
+      "tags":
+        - "Requests"
+      "summary": "Lịch sử yêu cầu"
+      "operationId": "requestHistory"
+      "description": "Quyền: ADMIN hoặc client tạo request hoặc developer được giao. changedAt tăng dần. REOPEN có trong enum nhưng không có luồng mở lại."
+      "x-access": "ADMIN hoặc client tạo request hoặc developer được giao"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/requestHistoryResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data": []
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+  "/api/requests/classify":
+    "post":
+      "tags":
+        - "AI"
+      "summary": "Phân loại yêu cầu"
+      "operationId": "classify"
+      "description": "Quyền: Đã đăng nhập. Rule-based: keyword BUG (.92), rồi FEATURE (.88), còn lại INQUIRY (.80). Không gọi nhà cung cấp AI."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/classifyResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "category": "BUG"
+                  "confidence": 0.92
+                  "reason": "Matched defect/error keyword: 'error'"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/ClassifyRequestDto"
+            "example":
+              "description": "Application error when logging in"
+  "/api/requests/suggest-priority":
+    "post":
+      "tags":
+        - "AI"
+      "summary": "Gợi ý độ ưu tiên"
+      "operationId": "suggestPriority"
+      "description": "Quyền: Đã đăng nhập. Rule-based: keyword HIGH (.95), rồi LOW (.85), còn lại MEDIUM (.80)."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/suggestPriorityResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "priority": "HIGH"
+                  "confidence": 0.95
+                  "reason": "Matched critical/urgency keyword: 'production'"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/SuggestPriorityDto"
+            "example":
+              "description": "Production is unavailable"
+  "/api/requests/{id}/summary":
+    "get":
+      "tags":
+        - "AI"
+      "summary": "Tóm tắt yêu cầu"
+      "operationId": "requestSummary"
+      "description": "Quyền: Đã đăng nhập. Hiện chỉ kiểm tra request tồn tại, không kiểm tra quyền sở hữu/phân công. Mẫu: [category] title - Request status is status with priority priority."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/requestSummaryResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "requestId": "0198f101-1234-7000-8000-000000000001"
+                  "summary": "[BUG] Không đăng nhập được - Request status is PENDING with MEDIUM priority."
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+  "/api/alerts":
+    "get":
+      "tags":
+        - "Alerts"
+      "summary": "Thông báo của tôi"
+      "operationId": "listAlerts"
+      "description": "Quyền: Đã đăng nhập. Chỉ targetMemberId của user; mới nhất trước."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/listAlertsResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data": []
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "unreadOnly"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "boolean"
+            "default": false
+          "description": "true: chỉ chưa đọc; false: tất cả."
+  "/api/alerts/{id}/read":
+    "patch":
+      "tags":
+        - "Alerts"
+      "summary": "Đánh dấu thông báo đã đọc"
+      "operationId": "readAlert"
+      "description": "Quyền: Đúng người nhận thông báo. Không body; gọi lại vẫn thành công. Admin không được đọc thay người khác."
+      "x-access": "Đúng người nhận thông báo"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/readAlertResponse"
+              "example":
+                "status": 200
+                "message": "Alert marked as read"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "requestId": "0198f101-1234-7000-8000-000000000001"
+                  "targetMemberId": "0198f101-1234-7000-8000-000000000001"
+                  "alertType": "ASSIGNED"
+                  "message": "Ví dụ"
+                  "isRead": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "id"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+  "/api/chat/inbox":
+    "get":
+      "tags":
+        - "Chat"
+      "summary": "Hộp thư chat"
+      "operationId": "chatInbox"
+      "description": "Quyền: Đã đăng nhập. Mọi tin thuộc request có quyền xem (admin/chủ request/developer được giao), gồm DB và bộ nhớ; mới nhất trước; không phân trang, không gộp hội thoại."
+      "x-access": "Đã đăng nhập"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/chatInboxResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data": []
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "500":
+          "$ref": "#/components/responses/Error500"
+  "/api/chat/requests/{requestId}/messages":
+    "get":
+      "tags":
+        - "Chat"
+      "summary": "Lịch sử chat"
+      "operationId": "chatHistory"
+      "description": "Quyền: ADMIN hoặc client tạo request hoặc developer được giao. Gồm DB và buffer, createdAt tăng dần."
+      "x-access": "ADMIN hoặc client tạo request hoặc developer được giao"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/chatHistoryResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data": []
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "requestId"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+    "post":
+      "tags":
+        - "Chat"
+      "summary": "Gửi tin nhắn"
+      "operationId": "sendMessage"
+      "description": "Quyền: ADMIN hoặc client tạo request hoặc developer được giao. HTTP 200, persisted=false. Trim message. Buffer theo request; sau 10 phút không gửi mới, scheduler kiểm tra mỗi 30 giây để lưu DB. Tin chưa lưu mất khi restart."
+      "x-access": "ADMIN hoặc client tạo request hoặc developer được giao"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/sendMessageResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "requestId": "0198f101-1234-7000-8000-000000000001"
+                  "requestTitle": "Ví dụ"
+                  "senderId": "0198f101-1234-7000-8000-000000000001"
+                  "senderName": "Ví dụ"
+                  "senderRole": "ADMIN"
+                  "message": "Ví dụ"
+                  "messageType": "TEXT"
+                  "isRead": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+                  "persisted": false
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "requestId"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/SendChatMessageRequest"
+            "example":
+              "message": "Tôi đã kiểm tra lỗi đăng nhập."
+              "messageType": "TEXT"
+  "/api/chat/messages/{messageId}/read":
+    "patch":
+      "tags":
+        - "Chat"
+      "summary": "Đánh dấu tin nhắn đã đọc"
+      "operationId": "readMessage"
+      "description": "Quyền: ADMIN hoặc client tạo request hoặc developer được giao. Không body. Mọi người có quyền xem request đều được đánh dấu; isRead là cờ chung."
+      "x-access": "ADMIN hoặc client tạo request hoặc developer được giao"
+      "responses":
+        "200":
+          "description": "Thành công."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/readMessageResponse"
+              "example":
+                "status": 200
+                "message": "success"
+                "data":
+                  "id": "0198f101-1234-7000-8000-000000000001"
+                  "requestId": "0198f101-1234-7000-8000-000000000001"
+                  "requestTitle": "Ví dụ"
+                  "senderId": "0198f101-1234-7000-8000-000000000001"
+                  "senderName": "Ví dụ"
+                  "senderRole": "ADMIN"
+                  "message": "Ví dụ"
+                  "messageType": "TEXT"
+                  "isRead": false
+                  "createdAt": "2026-09-12T03:00:00Z"
+                  "persisted": false
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "403":
+          "$ref": "#/components/responses/SecurityDenied"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "500":
+          "$ref": "#/components/responses/Error500"
+      "parameters":
+        - 
+          "name": "messageId"
+          "in": "path"
+          "required": true
+          "description": "ID tài nguyên UUID."
+          "schema":
+            "type": "string"
+            "format": "uuid"
+            "example": "0198f101-1234-7000-8000-000000000001"
+"components":
+  "securitySchemes":
+    "bearerAuth":
+      "type": "http"
+      "scheme": "bearer"
+      "bearerFormat": "JWT"
+      "description": "Dán accessToken từ login; Authorization: Bearer <accessToken>."
+  "schemas":
+    "AlertResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "requestId":
+          "type": "string"
+          "format": "uuid"
+        "targetMemberId":
+          "type": "string"
+          "format": "uuid"
+        "alertType":
+          "$ref": "#/components/schemas/AlertType"
+        "message":
+          "type": "string"
+        "isRead":
+          "type": "boolean"
+        "createdAt":
+          "type": "string"
+          "format": "date-time"
+    "ChatMessageResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "requestId":
+          "type": "string"
+          "format": "uuid"
+        "requestTitle":
+          "type": "string"
+        "senderId":
+          "type": "string"
+          "format": "uuid"
+        "senderName":
+          "type": "string"
+          "nullable": true
+        "senderRole":
+          "allOf":
+            - 
+              "$ref": "#/components/schemas/Role"
+          "nullable": true
+        "message":
+          "type": "string"
+        "messageType":
+          "type": "string"
+        "isRead":
+          "type": "boolean"
+          "description": "Cờ đọc chung, không riêng theo người đọc."
+        "createdAt":
+          "type": "string"
+          "format": "date-time"
+        "persisted":
+          "type": "boolean"
+          "description": "false: còn trong bộ nhớ; true: đã lưu DB."
+    "ClassifyResponseDto":
+      "type": "object"
+      "properties":
+        "category":
+          "$ref": "#/components/schemas/RequestCategory"
+        "confidence":
+          "type": "number"
+          "format": "double"
+        "reason":
+          "type": "string"
+    "CompanyResponse":
+      "type": "object"
+      "properties":
+        "companyId":
+          "type": "string"
+          "nullable": true
+        "companyName":
+          "type": "string"
+          "nullable": true
+        "address":
+          "type": "string"
+          "nullable": true
+        "phone":
+          "type": "string"
+          "nullable": true
+    "LoginAuthResponse":
+      "type": "object"
+      "properties":
+        "accessToken":
+          "type": "string"
+        "refreshToken":
+          "type": "string"
+        "user":
+          "$ref": "#/components/schemas/UserInfo"
+    "UserInfo":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "email":
+          "type": "string"
+        "name":
+          "type": "string"
+        "role":
+          "$ref": "#/components/schemas/Role"
+        "phone":
+          "type": "string"
+          "nullable": true
+        "companyId":
+          "type": "string"
+          "nullable": true
+        "companyName":
+          "type": "string"
+          "nullable": true
+        "status":
+          "type": "string"
+    "MemberResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "email":
+          "type": "string"
+        "name":
+          "type": "string"
+        "role":
+          "$ref": "#/components/schemas/Role"
+        "phone":
+          "type": "string"
+          "nullable": true
+        "companyId":
+          "type": "string"
+          "nullable": true
+        "companyName":
+          "type": "string"
+          "nullable": true
+        "status":
+          "type": "string"
+        "isDeleted":
+          "type": "boolean"
+        "createdAt":
+          "type": "string"
+          "format": "date-time"
+    "RefreshTokenResponse":
+      "type": "object"
+      "properties":
+        "accessToken":
+          "type": "string"
+        "refreshToken":
+          "type": "string"
+        "accessTokenTtl":
+          "type": "integer"
+          "format": "int64"
+          "description": "Thời gian sống tính bằng mili giây."
+        "refreshTokenTtl":
+          "type": "integer"
+          "format": "int64"
+          "description": "Thời gian sống tính bằng mili giây."
+    "RequestDetailResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "companyId":
+          "type": "string"
+          "nullable": true
+        "companyName":
+          "type": "string"
+          "nullable": true
+        "companyAddress":
+          "type": "string"
+          "nullable": true
+        "companyPhone":
+          "type": "string"
+          "nullable": true
+        "title":
+          "type": "string"
+        "description":
+          "type": "string"
+          "nullable": true
+        "category":
+          "$ref": "#/components/schemas/RequestCategory"
+        "priority":
+          "$ref": "#/components/schemas/RequestPriority"
+        "status":
+          "$ref": "#/components/schemas/RequestStatus"
+        "clientId":
+          "type": "string"
+          "format": "uuid"
+        "clientName":
+          "type": "string"
+          "nullable": true
+        "clientEmail":
+          "type": "string"
+          "nullable": true
+        "assignedDeveloperId":
+          "type": "string"
+          "format": "uuid"
+          "nullable": true
+        "assignedDeveloperName":
+          "type": "string"
+          "nullable": true
+        "assignedDeveloperEmail":
+          "type": "string"
+          "nullable": true
+        "createdAt":
+          "type": "string"
+          "format": "date-time"
+        "updatedAt":
+          "type": "string"
+          "format": "date-time"
+        "history":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/RequestHistoryResponse"
+    "RequestHistoryResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "requestId":
+          "type": "string"
+          "format": "uuid"
+        "changedBy":
+          "type": "string"
+          "format": "uuid"
+        "changedByName":
+          "type": "string"
+          "nullable": true
+        "action":
+          "$ref": "#/components/schemas/HistoryAction"
+        "fromStatus":
+          "allOf":
+            - 
+              "$ref": "#/components/schemas/RequestStatus"
+          "nullable": true
+        "toStatus":
+          "allOf":
+            - 
+              "$ref": "#/components/schemas/RequestStatus"
+          "nullable": true
+        "memo":
+          "type": "string"
+          "nullable": true
+        "changedAt":
+          "type": "string"
+          "format": "date-time"
+    "RequestResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "companyId":
+          "type": "string"
+          "nullable": true
+        "companyName":
+          "type": "string"
+          "nullable": true
+        "title":
+          "type": "string"
+        "description":
+          "type": "string"
+          "nullable": true
+        "category":
+          "$ref": "#/components/schemas/RequestCategory"
+        "priority":
+          "$ref": "#/components/schemas/RequestPriority"
+        "status":
+          "$ref": "#/components/schemas/RequestStatus"
+        "clientId":
+          "type": "string"
+          "format": "uuid"
+        "clientName":
+          "type": "string"
+          "nullable": true
+        "assignedDeveloperId":
+          "type": "string"
+          "format": "uuid"
+          "nullable": true
+        "assignedDeveloperName":
+          "type": "string"
+          "nullable": true
+        "createdAt":
+          "type": "string"
+          "format": "date-time"
+        "updatedAt":
+          "type": "string"
+          "format": "date-time"
+    "RequestStatsResponse":
+      "type": "object"
+      "properties":
+        "totalRequests":
+          "type": "integer"
+          "format": "int64"
+        "completedRequests":
+          "type": "integer"
+          "format": "int64"
+        "completionRate":
+          "type": "number"
+          "format": "double"
+          "minimum": 0
+          "maximum": 100
+          "description": "Phần trăm DONE / tổng; làm tròn 2 chữ số; tổng bằng 0 trả 0."
+        "requestsByCategory":
+          "type": "object"
+          "additionalProperties":
+            "type": "integer"
+            "format": "int64"
+        "requestsByDeveloper":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/DeveloperTaskStats"
+    "DeveloperTaskStats":
+      "type": "object"
+      "properties":
+        "developerId":
+          "type": "string"
+          "format": "uuid"
+        "developerName":
+          "type": "string"
+        "completedCount":
+          "type": "integer"
+          "format": "int64"
+        "inProgressCount":
+          "type": "integer"
+          "format": "int64"
+        "pendingCount":
+          "type": "integer"
+          "format": "int64"
+        "totalAssigned":
+          "type": "integer"
+          "format": "int64"
+    "RequestSummaryResponseDto":
+      "type": "object"
+      "properties":
+        "requestId":
+          "type": "string"
+          "format": "uuid"
+        "summary":
+          "type": "string"
+    "SuggestPriorityResponseDto":
+      "type": "object"
+      "properties":
+        "priority":
+          "$ref": "#/components/schemas/RequestPriority"
+        "confidence":
+          "type": "number"
+          "format": "double"
+        "reason":
+          "type": "string"
+    "AssignDeveloperDto":
+      "type": "object"
+      "properties":
+        "developerId":
+          "type": "string"
+          "format": "uuid"
+          "nullable": true
+          "description": "Bỏ qua/null để tự động chọn developer."
+    "ClassifyRequestDto":
+      "type": "object"
+      "properties":
+        "description":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+      "required":
+        - "description"
+    "CreateRequestDto":
+      "type": "object"
+      "properties":
+        "title":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+        "description":
+          "type": "string"
+        "category":
+          "$ref": "#/components/schemas/RequestCategory"
+        "priority":
+          "allOf":
+            - 
+              "$ref": "#/components/schemas/RequestPriority"
+          "nullable": true
+          "default": "MEDIUM"
+          "description": "Bỏ qua hoặc null đều dùng MEDIUM."
+      "required":
+        - "title"
+        - "category"
+    "LoginRequest":
+      "type": "object"
+      "properties":
+        "email":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+          "format": "email"
+        "password":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+          "format": "password"
+          "writeOnly": true
+      "required":
+        - "email"
+        - "password"
+    "RegisterRequest":
+      "type": "object"
+      "properties":
+        "email":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+          "format": "email"
+        "password":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+          "format": "password"
+          "writeOnly": true
+        "name":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+        "role":
+          "allOf":
+            - 
+              "$ref": "#/components/schemas/Role"
+          "description": "Source hiện chấp nhận cả ADMIN, DEVELOPER, CLIENT trên endpoint đăng ký public."
+        "phone":
+          "type": "string"
+        "companyId":
+          "type": "string"
+          "description": "Tùy chọn; trim khoảng trắng. Nếu khác rỗng phải tồn tại trong companies, nếu không trả 404."
+      "required":
+        - "email"
+        - "password"
+        - "name"
+        - "role"
+    "SendChatMessageRequest":
+      "type": "object"
+      "properties":
+        "message":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+          "maxLength": 10000
+        "messageType":
+          "type": "string"
+          "maxLength": 20
+          "default": "TEXT"
+          "description": "Chuỗi tùy ý, trim và uppercase; null/rỗng dùng TEXT. Không phải enum."
+      "required":
+        - "message"
+    "SuggestPriorityDto":
+      "type": "object"
+      "properties":
+        "description":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+      "required":
+        - "description"
+    "TokenRefreshRequest":
+      "type": "object"
+      "properties":
+        "refreshToken":
+          "type": "string"
+          "minLength": 1
+          "pattern": "\\S"
+      "required":
+        - "refreshToken"
+    "UpdateRequestStatusDto":
+      "type": "object"
+      "properties":
+        "status":
+          "$ref": "#/components/schemas/RequestStatus"
+        "memo":
+          "type": "string"
+      "required":
+        - "status"
+    "AlertType":
+      "type": "string"
+      "enum":
+        - "ASSIGNED"
+        - "STATUS_CHANGED"
+        - "HIGH_PRIORITY_REGISTERED"
+        - "REQUEST_REGISTERED"
+    "HistoryAction":
+      "type": "string"
+      "enum":
+        - "CREATE"
+        - "ASSIGN"
+        - "UPDATE"
+        - "CLOSE"
+        - "REOPEN"
+    "RequestCategory":
+      "type": "string"
+      "enum":
+        - "BUG"
+        - "FEATURE"
+        - "INQUIRY"
+    "RequestPriority":
+      "type": "string"
+      "enum":
+        - "HIGH"
+        - "MEDIUM"
+        - "LOW"
+    "RequestStatus":
+      "type": "string"
+      "enum":
+        - "PENDING"
+        - "IN_PROGRESS"
+        - "DONE"
+    "Role":
+      "type": "string"
+      "enum":
+        - "ADMIN"
+        - "DEVELOPER"
+        - "CLIENT"
+    "Sort":
+      "type": "object"
+      "properties":
+        "empty":
+          "type": "boolean"
+        "sorted":
+          "type": "boolean"
+        "unsorted":
+          "type": "boolean"
+    "Pageable":
+      "type": "object"
+      "properties":
+        "pageNumber":
+          "type": "integer"
+        "pageSize":
+          "type": "integer"
+        "sort":
+          "$ref": "#/components/schemas/Sort"
+        "offset":
+          "type": "integer"
+          "format": "int64"
+        "paged":
+          "type": "boolean"
+        "unpaged":
+          "type": "boolean"
+    "RequestPage":
+      "type": "object"
+      "description": "Spring PageImpl serialize trực tiếp."
+      "properties":
+        "content":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/RequestResponse"
+        "pageable":
+          "$ref": "#/components/schemas/Pageable"
+        "totalPages":
+          "type": "integer"
+        "totalElements":
+          "type": "integer"
+          "format": "int64"
+        "last":
+          "type": "boolean"
+        "size":
+          "type": "integer"
+        "number":
+          "type": "integer"
+        "sort":
+          "$ref": "#/components/schemas/Sort"
+        "numberOfElements":
+          "type": "integer"
+        "first":
+          "type": "boolean"
+        "empty":
+          "type": "boolean"
+    "ApiError":
+      "type": "object"
+      "required":
+        - "status"
+        - "errorCode"
+        - "message"
+      "properties":
+        "status":
+          "type": "integer"
+        "errorCode":
+          "type": "string"
+          "enum":
+            - "AUTH_401"
+            - "AUTH_403"
+            - "VAL_400"
+            - "BAD_400"
+            - "RES_404"
+            - "SYS_500"
+        "message":
+          "type": "string"
+        "data":
+          "type": "object"
+          "additionalProperties":
+            "type": "string"
+          "description": "Lỗi theo field; data null bị bỏ khỏi envelope."
+    "loginResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Login successful"
+        "data":
+          "$ref": "#/components/schemas/LoginAuthResponse"
+    "registerResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Member registered successfully"
+        "data":
+          "$ref": "#/components/schemas/MemberResponse"
+    "refreshResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Token refreshed successfully"
+        "data":
+          "$ref": "#/components/schemas/RefreshTokenResponse"
+    "logoutResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Logout successful"
+    "loginV1Response":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Login successful"
+        "data":
+          "$ref": "#/components/schemas/LoginAuthResponse"
+    "registerV1Response":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Member registered successfully"
+        "data":
+          "$ref": "#/components/schemas/MemberResponse"
+    "refreshV1Response":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Token refreshed successfully"
+        "data":
+          "$ref": "#/components/schemas/RefreshTokenResponse"
+    "logoutV1Response":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Logout successful"
+    "registerMemberResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Member registered successfully"
+        "data":
+          "$ref": "#/components/schemas/MemberResponse"
+    "listMembersResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/MemberResponse"
+    "getMemberResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/MemberResponse"
+    "listCompaniesResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/CompanyResponse"
+    "getCompanyResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/CompanyResponse"
+    "createRequestResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Request created successfully"
+        "data":
+          "$ref": "#/components/schemas/RequestResponse"
+    "listRequestsResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/RequestPage"
+    "requestStatsResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/RequestStatsResponse"
+    "requestDetailResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/RequestDetailResponse"
+    "assignDeveloperResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Developer assigned successfully"
+        "data":
+          "$ref": "#/components/schemas/RequestResponse"
+    "updateStatusResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Request status updated successfully"
+        "data":
+          "$ref": "#/components/schemas/RequestResponse"
+    "requestHistoryResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/RequestHistoryResponse"
+    "classifyResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/ClassifyResponseDto"
+    "suggestPriorityResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/SuggestPriorityResponseDto"
+    "requestSummaryResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/RequestSummaryResponseDto"
+    "listAlertsResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/AlertResponse"
+    "readAlertResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "Alert marked as read"
+        "data":
+          "$ref": "#/components/schemas/AlertResponse"
+    "chatInboxResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/ChatMessageResponse"
+    "chatHistoryResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/ChatMessageResponse"
+    "sendMessageResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/ChatMessageResponse"
+    "readMessageResponse":
+      "type": "object"
+      "required":
+        - "status"
+        - "message"
+        - "data"
+      "properties":
+        "status":
+          "type": "integer"
+          "enum":
+            - 200
+          "description": "Status trong body, kể cả khi HTTP 201."
+        "message":
+          "type": "string"
+          "example": "success"
+        "data":
+          "$ref": "#/components/schemas/ChatMessageResponse"
+  "responses":
+    "Error400":
+      "description": "VAL_400: body/validation sai. BAD_400: nghiệp vụ sai hoặc không có quyền tài nguyên."
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/ApiError"
+          "examples":
+            "business":
+              "value":
+                "status": 400
+                "errorCode": "BAD_400"
+                "message": "Bad request"
+            "validation":
+              "value":
+                "status": 400
+                "errorCode": "VAL_400"
+                "message": "Email cannot be blank"
+                "data":
+                  "email": "Email cannot be blank"
+    "Error401":
+      "description": "Invalid email or password"
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/ApiError"
+          "examples":
+            "business":
+              "value":
+                "status": 401
+                "errorCode": "AUTH_401"
+                "message": "Invalid email or password"
+    "Error404":
+      "description": "Resource not found"
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/ApiError"
+          "examples":
+            "business":
+              "value":
+                "status": 404
+                "errorCode": "RES_404"
+                "message": "Resource not found"
+    "Error500":
+      "description": "System internal error"
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/ApiError"
+          "examples":
+            "business":
+              "value":
+                "status": 500
+                "errorCode": "SYS_500"
+                "message": "System internal error"
+    "SecurityDenied":
+      "description": "403: thiếu/token không hợp lệ hoặc không đủ role ở security filter; body do framework quyết định, có thể rỗng. AccessDeniedException đến controller advice trả ApiError với AUTH_403."

@@ -1,0 +1,57 @@
+/* ============================================================
+   KITS — Design token
+   Nguồn sự thật duy nhất cho màu sắc, bo góc, chuyển động.
+   KHÔNG hardcode mã màu trong component: thêm token ở đây rồi
+   dùng qua var(--ten-token).
+   ============================================================ */
+:root {
+  /* Nền & chữ */
+  --navy-900: #0f172a;
+  --navy-800: #1e293b;
+  --navy-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50: #f8fafc;
+
+  /* Thương hiệu / CTA */
+  --blue-700: #0369a1;
+  --blue-600: #0284c7;
+  --blue-300: #93c5fd;
+  --blue-100: #dbeafe;
+  --blue-50: #eff6ff;
+  --sky-300: #7dd3fc;
+
+  /* Trạng thái */
+  --green-700: #047857;
+  --green-600: #059669;
+  --green-200: #a7f3d0;
+  --green-50: #ecfdf5;
+  --amber-700: #b45309;
+  --amber-600: #d97706;
+  --amber-800: #92400e;
+  --amber-200: #fde68a;
+  --amber-50: #fffbeb;
+  --red-700: #b91c1c;
+  --red-600: #dc2626;
+  --red-200: #fecaca;
+  --red-50: #fef2f2;
+
+  /* Nền trang trí panel thương hiệu */
+  --navy-decor: #16233d;
+
+  --white: #ffffff;
+  --text: #020617;
+
+  /* Hình khối */
+  --radius: 12px;
+  --radius-sm: 9px;
+  --ring: 0 0 0 3px rgba(3, 105, 161, 0.28);
+  --ring-danger: 0 0 0 3px rgba(220, 38, 38, 0.22);
+  --shadow-card:
+    0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 28px rgba(15, 23, 42, 0.06);
+  --dur: 180ms;
+}

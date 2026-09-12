@@ -1,0 +1,4 @@
+/* Điểm vào CSS toàn cục — nạp một lần duy nhất ở src/main.ts */
+@import './tokens.css';
+@import './base.css';
+@import './forms.css';

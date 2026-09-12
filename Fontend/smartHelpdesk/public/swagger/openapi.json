@@ -1,0 +1,3419 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Smart Helpdesk — API và bảng dữ liệu",
+    "version": "1.0.0",
+    "description": "Đối chiếu mã backend, DTO, SecurityConfig, Liquibase, SQL và frontend ngày 2026-09-12. 6 bảng nghiệp vụ, 25 thao tác chính + 4 alias auth. Đây là bản tĩnh theo mã nguồn; backend localhost:8080 chưa chạy khi xây dựng. UUID sinh phía server, JSON camelCase; không gửi cột audit hoặc password hash. Swagger không tạo API mới."
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "Cùng origin qua Vite/reverse proxy"
+    },
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Backend trực tiếp (cần CORS khi khác origin)"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "companies"
+    },
+    {
+      "name": "members"
+    },
+    {
+      "name": "requests"
+    },
+    {
+      "name": "request_histories"
+    },
+    {
+      "name": "alerts"
+    },
+    {
+      "name": "chat_messages"
+    },
+    {
+      "name": "AI"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng nhập",
+        "operationId": "post_auth_login",
+        "description": "Quyền: Public. Bảng liên quan: members, companies. ",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LoginAuthResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng ký",
+        "operationId": "post_auth_register",
+        "description": "Quyền: Public. Bảng liên quan: members, companies. Ghi members, tra cứu companies.",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "201": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Xoay vòng token",
+        "operationId": "post_auth_refresh",
+        "description": "Quyền: Public. Bảng liên quan: members. Refresh token chỉ dùng một lần; TTL tính bằng milliseconds. Token store nằm trong bộ nhớ, không có bảng refresh_tokens.",
+        "x-tables": [
+          "members"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RefreshTokenResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRefreshRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng xuất",
+        "operationId": "post_auth_logout",
+        "description": "Quyền: Public. Bảng liên quan: không ghi bảng nghiệp vụ. Security cho phép public; gửi Bearer token để thu hồi refresh token của người đang đăng nhập. Không có body.",
+        "x-tables": [],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "enum": [
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng nhập",
+        "operationId": "post_v1_auth_login",
+        "description": "Quyền: Public. Bảng liên quan: members, companies. ",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LoginAuthResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng ký",
+        "operationId": "post_v1_auth_register",
+        "description": "Quyền: Public. Bảng liên quan: members, companies. Ghi members, tra cứu companies.",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "201": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Xoay vòng token",
+        "operationId": "post_v1_auth_refresh",
+        "description": "Quyền: Public. Bảng liên quan: members. Refresh token chỉ dùng một lần; TTL tính bằng milliseconds. Token store nằm trong bộ nhớ, không có bảng refresh_tokens.",
+        "x-tables": [
+          "members"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RefreshTokenResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRefreshRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Đăng xuất",
+        "operationId": "post_v1_auth_logout",
+        "description": "Quyền: Public. Bảng liên quan: không ghi bảng nghiệp vụ. Security cho phép public; gửi Bearer token để thu hồi refresh token của người đang đăng nhập. Không có body.",
+        "x-tables": [],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "enum": [
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/members": {
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Đăng ký thành viên (URL thay thế)",
+        "operationId": "post_members",
+        "description": "Quyền: Public. Bảng liên quan: members, companies. ",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "201": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Danh sách thành viên",
+        "operationId": "get_members",
+        "description": "Quyền: ADMIN. Bảng liên quan: members, companies. Không hỗ trợ query role; frontend tự lọc Developer và isDeleted.",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "ADMIN",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MemberResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/members/{id}": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Chi tiết thành viên",
+        "operationId": "get_members_id",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: members, companies. ",
+        "x-tables": [
+          "members",
+          "companies"
+        ],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemberResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/companies": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Danh sách công ty",
+        "operationId": "get_companies",
+        "description": "Quyền: Public. Bảng liên quan: companies. Sắp theo companyName, sau đó companyId. SecurityConfig cho public dù mô tả Tag cũ ghi cần đăng nhập.",
+        "x-tables": [
+          "companies"
+        ],
+        "x-permission": "Public",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CompanyResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/companies/{companyId}": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Chi tiết công ty",
+        "operationId": "get_companies_companyId",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: companies. ",
+        "x-tables": [
+          "companies"
+        ],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CompanyResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/requests": {
+      "post": {
+        "tags": [
+          "requests"
+        ],
+        "summary": "Tạo yêu cầu",
+        "operationId": "post_requests",
+        "description": "Quyền: CLIENT. Bảng liên quan: requests, members, companies, request_histories, alerts. Ghi request và lịch sử CREATE; thông báo Admin theo RequestFacadeImpl.",
+        "x-tables": [
+          "requests",
+          "members",
+          "companies",
+          "request_histories",
+          "alerts"
+        ],
+        "x-permission": "CLIENT",
+        "responses": {
+          "201": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequestDto"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "requests"
+        ],
+        "summary": "Danh sách yêu cầu",
+        "operationId": "get_requests",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: requests, members, companies. ADMIN xem tất cả; CLIENT chỉ request do mình tạo; DEVELOPER chỉ request được giao. Không phân quyền Client theo toàn công ty.",
+        "x-tables": [
+          "requests",
+          "members",
+          "companies"
+        ],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestPage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RequestCategory"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RequestPriority"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RequestStatus"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortDir",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/requests/stats": {
+      "get": {
+        "tags": [
+          "requests"
+        ],
+        "summary": "Thống kê KPI",
+        "operationId": "get_requests_stats",
+        "description": "Quyền: ADMIN. Bảng liên quan: requests, members. ",
+        "x-tables": [
+          "requests",
+          "members"
+        ],
+        "x-permission": "ADMIN",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestStatsResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/requests/{id}": {
+      "get": {
+        "tags": [
+          "requests"
+        ],
+        "summary": "Chi tiết kèm lịch sử",
+        "operationId": "get_requests_id",
+        "description": "Quyền: Có quyền xem request. Bảng liên quan: requests, members, companies, request_histories. ADMIN xem tất cả; CLIENT chỉ request do mình tạo; DEVELOPER chỉ request được giao. Không phân quyền Client theo toàn công ty.",
+        "x-tables": [
+          "requests",
+          "members",
+          "companies",
+          "request_histories"
+        ],
+        "x-permission": "Có quyền xem request",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestDetailResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/requests/{id}/assign": {
+      "patch": {
+        "tags": [
+          "requests"
+        ],
+        "summary": "Phân công Developer",
+        "operationId": "patch_requests_id_assign",
+        "description": "Quyền: ADMIN. Bảng liên quan: requests, members, companies, request_histories, alerts. Bỏ body, gửi {} hoặc developerId:null để tự phân công; truyền UUID để phân công thủ công. Ghi lịch sử ASSIGN và thông báo Developer.",
+        "x-tables": [
+          "requests",
+          "members",
+          "companies",
+          "request_histories",
+          "alerts"
+        ],
+        "x-permission": "ADMIN",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignDeveloperDto"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/requests/{id}/status": {
+      "patch": {
+        "tags": [
+          "requests"
+        ],
+        "summary": "Chuyển trạng thái",
+        "operationId": "patch_requests_id_status",
+        "description": "Quyền: ADMIN hoặc Developer được giao. Bảng liên quan: requests, members, companies, request_histories, alerts. Chỉ PENDING → IN_PROGRESS → DONE; cấm nhảy cóc, đổi cùng trạng thái, mở lại. Ghi lịch sử và thông báo Client.",
+        "x-tables": [
+          "requests",
+          "members",
+          "companies",
+          "request_histories",
+          "alerts"
+        ],
+        "x-permission": "ADMIN hoặc Developer được giao",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequestStatusDto"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/requests/{id}/history": {
+      "get": {
+        "tags": [
+          "request_histories"
+        ],
+        "summary": "Lịch sử yêu cầu",
+        "operationId": "get_requests_id_history",
+        "description": "Quyền: Có quyền xem request. Bảng liên quan: request_histories, requests, members. ADMIN xem tất cả; CLIENT chỉ request do mình tạo; DEVELOPER chỉ request được giao. Không phân quyền Client theo toàn công ty.",
+        "x-tables": [
+          "request_histories",
+          "requests",
+          "members"
+        ],
+        "x-permission": "Có quyền xem request",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RequestHistoryResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/requests/classify": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Gợi ý phân loại",
+        "operationId": "post_requests_classify",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: không ghi bảng nghiệp vụ. RuleBasedLlmAdapter xử lý description, không tự tạo request.",
+        "x-tables": [],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ClassifyResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifyRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/requests/suggest-priority": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Gợi ý độ ưu tiên",
+        "operationId": "post_requests_suggest_priority",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: không ghi bảng nghiệp vụ. RuleBasedLlmAdapter; không tự cập nhật priority trong DB.",
+        "x-tables": [],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SuggestPriorityResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestPriorityDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/requests/{id}/summary": {
+      "get": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Tóm tắt yêu cầu",
+        "operationId": "get_requests_id_summary",
+        "description": "Quyền: Có quyền xem request. Bảng liên quan: requests. ADMIN xem tất cả; CLIENT chỉ request do mình tạo; DEVELOPER chỉ request được giao. Không phân quyền Client theo toàn công ty.",
+        "x-tables": [
+          "requests"
+        ],
+        "x-permission": "Có quyền xem request",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RequestSummaryResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Thông báo của tôi",
+        "operationId": "get_alerts",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: alerts. ",
+        "x-tables": [
+          "alerts"
+        ],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AlertResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ]
+      }
+    },
+    "/alerts/{id}/read": {
+      "patch": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Đánh dấu thông báo đã đọc",
+        "operationId": "patch_alerts_id_read",
+        "description": "Quyền: Người nhận thông báo. Bảng liên quan: alerts. Không có body.",
+        "x-tables": [
+          "alerts"
+        ],
+        "x-permission": "Người nhận thông báo",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AlertResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/chat/inbox": {
+      "get": {
+        "tags": [
+          "chat_messages"
+        ],
+        "summary": "Hộp thư chat",
+        "operationId": "get_chat_inbox",
+        "description": "Quyền: Đã đăng nhập. Bảng liên quan: chat_messages, requests, members. ADMIN, Client tạo request hoặc Developer được giao. Không có quyền chat hiện trả 400. Tin chờ trong RAM được gộp với DB; persist sau 10 phút không gửi tin mới. isRead là cờ chung. Sắp mới nhất trước, chưa phân trang.",
+        "x-tables": [
+          "chat_messages",
+          "requests",
+          "members"
+        ],
+        "x-permission": "Đã đăng nhập",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ChatMessageResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/requests/{requestId}/messages": {
+      "get": {
+        "tags": [
+          "chat_messages"
+        ],
+        "summary": "Lịch sử chat",
+        "operationId": "get_chat_requests_requestId_messages",
+        "description": "Quyền: Có quyền xem request. Bảng liên quan: chat_messages, requests, members. ADMIN, Client tạo request hoặc Developer được giao. Không có quyền chat hiện trả 400. Tin chờ trong RAM được gộp với DB; persist sau 10 phút không gửi tin mới. isRead là cờ chung. Sắp cũ nhất trước.",
+        "x-tables": [
+          "chat_messages",
+          "requests",
+          "members"
+        ],
+        "x-permission": "Có quyền xem request",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ChatMessageResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "chat_messages"
+        ],
+        "summary": "Gửi tin nhắn",
+        "operationId": "post_chat_requests_requestId_messages",
+        "description": "Quyền: Có quyền xem request. Bảng liên quan: chat_messages, requests, members. ADMIN, Client tạo request hoặc Developer được giao. Không có quyền chat hiện trả 400. Tin chờ trong RAM được gộp với DB; persist sau 10 phút không gửi tin mới. isRead là cờ chung. Trả HTTP 200, persisted:false.",
+        "x-tables": [
+          "chat_messages",
+          "requests",
+          "members"
+        ],
+        "x-permission": "Có quyền xem request",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ChatMessageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendChatMessageRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/chat/messages/{messageId}/read": {
+      "patch": {
+        "tags": [
+          "chat_messages"
+        ],
+        "summary": "Đánh dấu tin nhắn đã đọc",
+        "operationId": "patch_chat_messages_messageId_read",
+        "description": "Quyền: Có quyền xem request. Bảng liên quan: chat_messages, requests, members. ADMIN, Client tạo request hoặc Developer được giao. Không có quyền chat hiện trả 400. Tin chờ trong RAM được gộp với DB; persist sau 10 phút không gửi tin mới. isRead là cờ chung. Không có body.",
+        "x-tables": [
+          "chat_messages",
+          "requests",
+          "members"
+        ],
+        "x-permission": "Có quyền xem request",
+        "responses": {
+          "200": {
+            "description": "Thành công; status trong envelope là 200.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ChatMessageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation hoặc điều kiện nghiệp vụ không hợp lệ.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực thất bại; lỗi từ security filter có thể không có envelope."
+          },
+          "403": {
+            "description": "Không đủ quyền; lỗi từ security filter có thể không có envelope."
+          },
+          "404": {
+            "description": "Không tìm thấy tài nguyên hoặc request ngoài phạm vi truy cập.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi hệ thống.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Role": {
+        "type": "string",
+        "enum": [
+          "ADMIN",
+          "DEVELOPER",
+          "CLIENT"
+        ]
+      },
+      "RequestCategory": {
+        "type": "string",
+        "enum": [
+          "BUG",
+          "FEATURE",
+          "INQUIRY"
+        ]
+      },
+      "RequestPriority": {
+        "type": "string",
+        "enum": [
+          "HIGH",
+          "MEDIUM",
+          "LOW"
+        ]
+      },
+      "RequestStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "IN_PROGRESS",
+          "DONE"
+        ]
+      },
+      "HistoryAction": {
+        "type": "string",
+        "enum": [
+          "CREATE",
+          "ASSIGN",
+          "UPDATE",
+          "CLOSE",
+          "REOPEN"
+        ]
+      },
+      "AlertType": {
+        "type": "string",
+        "enum": [
+          "ASSIGNED",
+          "STATUS_CHANGED",
+          "HIGH_PRIORITY_REGISTERED",
+          "REQUEST_REGISTERED"
+        ]
+      },
+      "AssignDeveloperDto": {
+        "type": "object",
+        "properties": {
+          "developerId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "ClassifyRequestDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "description"
+        ]
+      },
+      "CreateRequestDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/RequestCategory"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestPriority"
+              }
+            ],
+            "default": "MEDIUM"
+          }
+        },
+        "required": [
+          "title",
+          "category"
+        ],
+        "description": "companyId và clientId lấy từ thành viên đăng nhập. Client phải có công ty. status ban đầu PENDING; priority mặc định MEDIUM. title tối đa 255 theo DB (DTO chưa có @Size)."
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "writeOnly": true
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name",
+          "role"
+        ],
+        "description": "Backend hiện chấp nhận cả ADMIN, DEVELOPER, CLIENT trên endpoint public. Frontend chỉ cho Client/Developer; Client chọn KR_SAMSUNG/KR_NAVER/KR_KAKAO, Developer gửi KR_BZCOM. Đây là quy tắc UI, chưa được backend cưỡng chế. companyId nếu cung cấp phải tồn tại. Giới hạn DB: email/name 100, phone/companyId 20; DTO chưa có @Size tương ứng."
+      },
+      "SendChatMessageRequest": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "maxLength": 10000
+          },
+          "messageType": {
+            "type": "string",
+            "maxLength": 20,
+            "default": "TEXT"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SuggestPriorityDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "description"
+        ]
+      },
+      "TokenRefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "UpdateRequestStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/RequestStatus"
+          },
+          "memo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "AlertResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetMemberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "alertType": {
+            "$ref": "#/components/schemas/AlertType"
+          },
+          "message": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChatMessageResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestTitle": {
+            "type": "string"
+          },
+          "senderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "senderRole": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "DEVELOPER",
+              "CLIENT"
+            ],
+            "nullable": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "messageType": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean",
+            "description": "Cờ chung của tin nhắn, không phải trạng thái đọc riêng từng thành viên."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "persisted": {
+            "type": "boolean",
+            "description": "false: còn trong bộ nhớ; true: đã ghi DB. Flush sau 10 phút không gửi thêm tin, scheduler kiểm tra mỗi 30 giây."
+          }
+        }
+      },
+      "ClassifyResponseDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/RequestCategory"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CompanyResponse": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginAuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserInfo"
+          }
+        }
+      },
+      "MemberResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "RefreshTokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "accessTokenTtl": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refreshTokenTtl": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RequestDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/RequestCategory"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RequestPriority"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RequestStatus"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedDeveloperId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignedDeveloperName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedDeveloperEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestHistoryResponse"
+            }
+          }
+        }
+      },
+      "RequestHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "changedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "changedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "action": {
+            "$ref": "#/components/schemas/HistoryAction"
+          },
+          "fromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_PROGRESS",
+              "DONE"
+            ],
+            "nullable": true
+          },
+          "toStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_PROGRESS",
+              "DONE"
+            ],
+            "nullable": true
+          },
+          "memo": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RequestResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/RequestCategory"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/RequestPriority"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RequestStatus"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedDeveloperId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignedDeveloperName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DeveloperTaskStats": {
+        "type": "object",
+        "properties": {
+          "developerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "developerName": {
+            "type": "string"
+          },
+          "completedCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgressCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalAssigned": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RequestStatsResponse": {
+        "type": "object",
+        "properties": {
+          "totalRequests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedRequests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completionRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Phần trăm 0–100; frontend chia 100 để hiển thị."
+          },
+          "requestsByCategory": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "requestsByDeveloper": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeveloperTaskStats"
+            }
+          }
+        }
+      },
+      "RequestSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      },
+      "SuggestPriorityResponseDto": {
+        "type": "object",
+        "properties": {
+          "priority": {
+            "$ref": "#/components/schemas/RequestPriority"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "RequestPage": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "description": "Trang bắt đầu từ 0"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "numberOfElements": {
+            "type": "integer"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "pageable": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "sort": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

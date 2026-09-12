@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+  <changeSet id="7" author="antigravity">
+    <createTable tableName="chat_messages">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="request_id" type="uuid">
+        <constraints nullable="false"/>
+      </column>
+      <column name="sender_id" type="uuid">
+        <constraints nullable="false"/>
+      </column>
+      <column name="message" type="clob">
+        <constraints nullable="false"/>
+      </column>
+      <column name="message_type" type="varchar(20)" defaultValue="TEXT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="is_read" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addForeignKeyConstraint
+      baseTableName="chat_messages"
+      baseColumnNames="request_id"
+      constraintName="fk_chat_messages_requests"
+      referencedTableName="requests"
+      referencedColumnNames="id"
+      onDelete="CASCADE"/>
+
+    <addForeignKeyConstraint
+      baseTableName="chat_messages"
+      baseColumnNames="sender_id"
+      constraintName="fk_chat_messages_members"
+      referencedTableName="members"
+      referencedColumnNames="id"/>
+  </changeSet>
+
+</databaseChangeLog>

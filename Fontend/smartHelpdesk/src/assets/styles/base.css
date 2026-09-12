@@ -1,0 +1,43 @@
+/* ============================================================
+   KITS — Reset & thiết lập nền
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    'Plus Jakarta Sans',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Arial,
+    sans-serif;
+  color: var(--text);
+  background: var(--slate-50);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* Tôn trọng thiết lập giảm chuyển động của hệ điều hành */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

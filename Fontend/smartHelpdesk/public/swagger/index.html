@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Helpdesk — Swagger</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  </head>
+  <body>
+    <p style="padding: 12px 24px; font-family: sans-serif">
+      Smart Helpdesk · <a href="./openapi.json">Tải OpenAPI JSON</a> ·
+      Dùng POST /auth/login rồi nhập accessToken vào Authorize để thử API.
+      Swagger UI cần Internet để tải thư viện; nếu không tải được, import JSON vào công cụ OpenAPI của bạn.
+    </p>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin="anonymous"></script>
+    <script>
+      window.onload = () => {
+        if (!window.SwaggerUIBundle) {
+          document.getElementById('swagger-ui').textContent = 'Không tải được Swagger UI từ CDN. Hãy tải OpenAPI JSON bằng liên kết phía trên.'
+          return
+        }
+        window.ui = SwaggerUIBundle({
+          url: './openapi.json', dom_id: '#swagger-ui', deepLinking: true,
+          filter: true, displayRequestDuration: true, persistAuthorization: false,
+          validatorUrl: null,
+        })
+      }
+    </script>
+  </body>
+</html>

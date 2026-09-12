@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:mysql}
+  application:
+    name: Be-Smart-Helpdesk
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml

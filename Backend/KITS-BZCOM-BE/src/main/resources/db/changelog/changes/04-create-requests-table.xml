@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+  <changeSet id="4" author="antigravity">
+    <createTable tableName="requests">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="company_id" type="varchar(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="title" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="clob"/>
+      <column name="category" type="varchar(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="priority" type="varchar(20)" defaultValue="MEDIUM">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="varchar(20)" defaultValue="PENDING">
+        <constraints nullable="false"/>
+      </column>
+      <column name="client_id" type="uuid">
+        <constraints nullable="false"/>
+      </column>
+      <column name="assigned_developer_id" type="uuid"/>
+      <column name="created_at" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="uuid"/>
+      <column name="updated_by" type="uuid"/>
+    </createTable>
+
+    <addForeignKeyConstraint
+      baseTableName="requests"
+      baseColumnNames="company_id"
+      constraintName="fk_requests_companies"
+      referencedTableName="companies"
+      referencedColumnNames="company_id"
+      onUpdate="CASCADE"/>
+
+    <addForeignKeyConstraint
+      baseTableName="requests"
+      baseColumnNames="client_id"
+      constraintName="fk_requests_client"
+      referencedTableName="members"
+      referencedColumnNames="id"/>
+
+    <addForeignKeyConstraint
+      baseTableName="requests"
+      baseColumnNames="assigned_developer_id"
+      constraintName="fk_requests_developer"
+      referencedTableName="members"
+      referencedColumnNames="id"/>
+  </changeSet>
+
+</databaseChangeLog>

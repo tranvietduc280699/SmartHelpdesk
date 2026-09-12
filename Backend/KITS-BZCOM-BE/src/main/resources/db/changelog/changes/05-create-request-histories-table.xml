@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+  <changeSet id="5" author="antigravity">
+    <createTable tableName="request_histories">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="request_id" type="uuid">
+        <constraints nullable="false"/>
+      </column>
+      <column name="changed_by" type="uuid">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action" type="varchar(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="from_status" type="varchar(20)"/>
+      <column name="to_status" type="varchar(20)"/>
+      <column name="memo" type="clob"/>
+      <column name="changed_at" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addForeignKeyConstraint
+      baseTableName="request_histories"
+      baseColumnNames="request_id"
+      constraintName="fk_histories_requests"
+      referencedTableName="requests"
+      referencedColumnNames="id"
+      onDelete="CASCADE"/>
+
+    <addForeignKeyConstraint
+      baseTableName="request_histories"
+      baseColumnNames="changed_by"
+      constraintName="fk_histories_members"
+      referencedTableName="members"
+      referencedColumnNames="id"/>
+  </changeSet>
+
+</databaseChangeLog>
