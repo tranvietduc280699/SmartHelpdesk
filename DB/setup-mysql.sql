@@ -1,8 +1,4 @@
--- MySQL 8.x: complete application schema for this backend.
--- Run against smarthelpdeskdb_be, not the old incompatible smarthelpdeskdb.
--- Existing tables/data are preserved; this script does not migrate old schemas.
--- For manual SQL setup, run BE with SPRING_LIQUIBASE_ENABLED=false
--- and SPRING_JPA_HIBERNATE_DDL_AUTO=validate.
+-- MySQL 8.x
 SET NAMES utf8mb4;
 CREATE DATABASE IF NOT EXISTS smarthelpdeskdb_be
   CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -103,18 +99,19 @@ CREATE TABLE IF NOT EXISTS `chat_messages` (
 
 
 
--- Seed the three partner companies; preserve existing rows with the same ID.
+
+-- thêm dữ liệu công ty mặc định
 INSERT INTO companies (company_id, company_name, address, phone)
-SELECT 'KR_CLIENT_Ss', 'Samsung C&T Corporation', 'Seoul, South Korea', '+82-2145-1114'
-WHERE NOT EXISTS (SELECT 1 FROM companies WHERE company_id = 'KR_CLIENT_Ss');
+SELECT 'KR_SAMSUNG', 'Samsung C&T Corporation', '67 Seochodae-ro, Seocho-gu, Seoul, South Korea', '+82-2145-1114'
 
 INSERT INTO companies (company_id, company_name, address, phone)
-SELECT 'KR_CLIENT_Nv', 'Naver Financial Corp.', 'Seongnam-si, Gyeonggi-do, South Korea', '+82-1588-3820'
-WHERE NOT EXISTS (SELECT 1 FROM companies WHERE company_id = 'KR_CLIENT_Nv');
+SELECT 'KR_NAVER', 'Naver Financial Corp.', '6 Buljeong-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, South Korea', '+82-1588-3820'
 
 INSERT INTO companies (company_id, company_name, address, phone)
-SELECT 'KR_CLIENT_Kk', 'Kakao Mobility Corp.', 'Seongnam-si, Gyeonggi-do, South Korea', '+82-1599-9400'
-WHERE NOT EXISTS (SELECT 1 FROM companies WHERE company_id = 'KR_CLIENT_Kk');
+SELECT 'KR_KAKAO', 'Kakao Mobility Corp.', '242 Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, South Korea', '+82-1599-9400'
+
+INSERT INTO companies (company_id, company_name, address, phone)
+SELECT 'BZCOM', 'BZCOM Technology Corp.', '120 Teheran-ro, Gangnam-gu, Seoul, South Korea', '+82-2555-0199'
 
 SHOW TABLES;
 SELECT company_id, company_name, address, phone FROM companies
