@@ -111,7 +111,7 @@ INSERT INTO companies (company_id, company_name, address, phone)
 SELECT 'KR_KAKAO', 'Kakao Mobility Corp.', '242 Pangyoyeok-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, South Korea', '+82-1599-9400'
 
 INSERT INTO companies (company_id, company_name, address, phone)
-SELECT 'BZCOM', 'BZCOM Technology Corp.', '120 Teheran-ro, Gangnam-gu, Seoul, South Korea', '+82-2555-0199'
+SELECT 'KR_BZCOM', 'BZCOM Technology Corp.', '120 Teheran-ro, Gangnam-gu, Seoul, South Korea', '+82-2555-0199'
 
 SHOW TABLES;
 SELECT company_id, company_name, address, phone FROM companies
